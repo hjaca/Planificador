@@ -1,44 +1,24 @@
-from django.views.generic import ListView
-from django.shortcuts import render, redirect, get_object_or_404
+from calendar import month_name
+from datetime import timedelta, datetime, date
+
+from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import UserCreationForm
-from django.contrib.auth import authenticate, login
-from django.contrib import messages
+from django.contrib.auth import authenticate, login as auth_login
 from django.http import HttpResponse
-from django.views import generic
-import calendar
-from datetime import timedelta, datetime, date
-from django.contrib.auth import login, authenticate
+from django.shortcuts import render, redirect, get_object_or_404
 from django.utils.safestring import mark_safe
+from django.views import generic
+from django.views.generic import ListView
 
-from .models import Comida, Miembro, Compra
+from .forms import ComidaForm, MiembroForm, CompraForm, ElementoCompraForm, LoginForm
 
-from .forms import ComidaForm, MiembroForm, CompraForm
-
-from django.shortcuts import render
-
-
-def calendario_menu(request):
-    return render(request, 'planificador_comidas/calendarioMenu.html')
-
-def index(request):
-    return render(request, 'planificador_comidas/index.html')
+from .models import Comida, Miembro, Compra, ElementoCompra
 
 
+from django.contrib import messages
 
-def login(request):
-    if request.method == 'POST':
-        username = request.POST['username']
-        password = request.POST['password']
-        user = authenticate(request, username=username, password=password)
-        if user is not None:
-            login(request, user)
-            return redirect('index')
-        else:
-            messages.error(request, 'Usuario o contraseña incorrectos')
-    return render(request, 'planificador_comidas/login.html')
-
-
+# ...
 
 def registro(request):
     if request.method == 'POST':
@@ -51,10 +31,36 @@ def registro(request):
             messages.success(request, f'¡Tu cuenta ha sido creada, {username}!')
             login(request, user)
             return redirect('login')
-            
+        else:
+            messages.error(request, 'Por favor, corrige los errores en el formulario.')
     else:
         form = UserCreationForm()
     return render(request, 'planificador_comidas/registro.html', {'form': form})
+
+
+def calendario_menu(request):
+    return render(request, 'planificador_comidas/calendarioMenu.html')
+
+def index(request):
+    return render(request, 'planificador_comidas/index.html')
+
+
+
+
+def login_view(request): 
+    if request.method == 'POST': 
+        username = request.POST['username'] 
+        password = request.POST['password'] 
+        user = authenticate(request, username=username, password=password) 
+        if user is not None: 
+            auth_login(request, user) 
+            return redirect('index') 
+        else: 
+            messages.error(request, 'Usuario o contraseña incorrectos') 
+    return render(request, 'planificador_comidas/login.html')
+
+
+
 
 #@login_required
 def comida(request):
@@ -71,6 +77,8 @@ def agregar_comida(request):
             comida.save()
             form.save_m2m()
             return redirect('comida')
+        else:
+            messages.error(request, 'Por favor, corrige los errores en el formulario.')
     else:
         form = ComidaForm()
     return render(request, 'planificador_comidas/comida/agregar_comida.html', {'form': form})
@@ -180,10 +188,11 @@ def agregar_compra(request):
             compra.comida = form.cleaned_data['comida']
             compra.save()
             return redirect('compras')
+        else:
+            messages.error(request, 'Por favor, corrige los errores en el formulario.')
     else:
         form = CompraForm()
     return render(request, 'planificador_comidas/compras/agregar_compra.html', {'form': form})
-
 
 #@login_required
 def editar_compra(request, pk):
@@ -221,6 +230,49 @@ class RunningListaComidasView(ListView):
 
     template_name = "lista_comida.html"
     model = Comida
+
+
+
+# ...
+
+def agregar_elemento(request, compra_pk):
+    compra = get_object_or_404(Compra, pk=compra_pk)
+
+    if request.method == 'POST':
+        form = ElementoCompraForm(request.POST)
+        if form.is_valid():
+            elemento = form.save(commit=False)
+            elemento.compra = compra
+            elemento.save()
+            return redirect('compras')
+        else:
+            messages.error(request, 'Por favor, corrige los errores en el formulario.')
+    else:
+        form = ElementoCompraForm()
+
+    return render(request, 'planificador_comidas/compras/agregar_elemento.html', {'form': form, 'compra': compra})
+
+def editar_elemento(request, compra_pk, elemento_pk):
+    compra = get_object_or_404(Compra, pk=compra_pk)
+    elemento = get_object_or_404(ElementoCompra, pk=elemento_pk)
+
+    if request.method == 'POST':
+        form = ElementoCompraForm(request.POST, instance=elemento)
+        if form.is_valid():
+            elemento = form.save(commit=False)
+            elemento.compra = compra
+            elemento.save()
+            return redirect('compras')
+    else:
+        form = ElementoCompraForm(instance=elemento)
+
+    return render(request, 'planificador_comidas/compras/editar_elemento.html', {'form': form, 'compra': compra, 'elemento': elemento})
+
+def eliminar_elemento(request, compra_pk, elemento_pk):
+    elemento = get_object_or_404(ElementoCompra, pk=elemento_pk)
+    elemento.delete()
+    return redirect('compras')
+
 
 #    def get_queryset(self):
  #       return Comida.objects.get_running_comidas(user=self.request.user)
