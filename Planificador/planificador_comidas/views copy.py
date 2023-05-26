@@ -4,6 +4,7 @@ from datetime import timedelta, datetime, date
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import UserCreationForm , AuthenticationForm
+#from django.contrib.auth import authenticate, login as auth_login, logout
 from django.contrib.auth import authenticate, login , logout
 from django.http import HttpResponse
 from django.shortcuts import render, redirect, get_object_or_404
@@ -21,12 +22,65 @@ from .forms import AltaUsuarioForm
 
 # ...
 
+# def registro(request):
+#     if request.method == 'POST':
+#         form = UserCreationForm(request.POST)
+#         if form.is_valid():
+#             form.save()
+#             username = form.cleaned_data.get('username')
+#             password = form.cleaned_data.get('password')
+#             user = authenticate(username=username, password=password)
+#             messages.success(request, f'¡Tu cuenta ha sido creada, {username}!')
+#             login_view(request)
+# #            login(request)
+#             return redirect('login')
+#         else:
+#             messages.error(request, 'Por favor, corrige los errores en el formulario.')
+#     else:
+#         form = UserCreationForm()
+#     return render(request, 'planificador_comidas/registro.html', {'form': form})
+
+
 def calendario_menu(request):
     return render(request, 'planificador_comidas/calendarioMenu.html')
 
 def index(request):
     return render(request, 'planificador_comidas/index.html')
 
+
+# def login(request): 
+#     messages.error(request, 'V login') 
+#     if request.method == 'POST':
+#         username = request.POST.get('username', '')
+#         password = request.POST.get('password', '') 
+#         user = authenticate(request, username=username, password=password) 
+#         if user is not None: 
+#             auth_login(request, user) 
+# #            login(request) 
+#             return redirect('index') 
+#         else: 
+#             messages.error(request, 'Usuario o contraseña incorrectos') 
+#     messages.error(request, 'V login') 
+#     return render(request, 'planificador_comidas/login.html')
+
+
+
+# def login_view(request): 
+#     messages.error(request, 'V login_view') 
+#     if request.method == 'POST': 
+#         username = request.POST.get('username', '') 
+#         password = request.POST.get('password', '') 
+#         # username = request.POST["username"]
+#         # password = request.POST["password"]|
+#         user = authenticate(request, username=username, password=password) 
+#         if user is not None: 
+#             auth_login(request, user) 
+# #            login(request) 
+#             return redirect('indexZ') 
+#         else: 
+#             messages.error(request, 'Usuario o contraseña incorrectos') 
+#     messages.error(request, 'V login_view') 
+#     return render(request, 'planificador_comidas/login.html')
 
 def registro(request):     
     if request.method == "POST":
@@ -49,7 +103,7 @@ def registro(request):
         'form': alta_usuario_form
     }
 
-    return render(request, 'planificador_comidas/registro.html',context) 
+    return render(request, 'Viplanificador_comidas/registro.html',context) 
 
 
 ############    LOGIN / LOGOUT  #####################
